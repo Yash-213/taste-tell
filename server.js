@@ -33,14 +33,12 @@ const recipeSchema = new mongoose.Schema({
 });
 
 const recipes = mongoose.model("Recipe", recipeSchema);
-
 // Main route
 app.get('/', async (req, res) => {
   res.render("index",{
     recipes:[]
   });
 });
-
 
 app.get("/login", async(req,res)=>{
   res.render("loginPage");

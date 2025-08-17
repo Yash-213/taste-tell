@@ -6,6 +6,7 @@
   <title>Login / Signup</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
+    /* (No styling changes, same look) */
     body {
       background: linear-gradient(135deg, #ff7043, #ffca28);
       height: 100vh;
@@ -30,6 +31,7 @@
       color: #ff7043;
       cursor: pointer;
       font-weight: bold;
+      text-decoration: none;
     }
   </style>
 </head>
@@ -37,59 +39,87 @@
   <div class="auth-card">
     <h2 id="formTitle" class="text-center">Login</h2>
 
-    <!-- Default = login -->
-    <form method="POST" action="/login" id="authForm">
+    <!-- Alerts from query params -->
+    <% if (typeof error !== 'undefined' && error) { %>
+      <div class="alert alert-danger py-2 mb-3"><%= error %></div>
+    <% } %>
+    <% if (typeof success !== 'undefined' && success) { %>
+      <div class="alert alert-success py-2 mb-3"><%= success %></div>
+    <% } %>
+
+    <!-- Default action /login; script will switch to /signup when needed -->
+    <form method="POST" action="/login" id="authForm" novalidate>
+      <!-- Username (signup only) -->
       <div class="mb-3" id="usernameField" style="display:none;">
         <label for="username" class="form-label">Username</label>
+        <!-- name="username" is critical for req.body.username -->
         <input type="text" class="form-control" id="username" name="username" placeholder="Choose a username">
       </div>
 
       <div class="mb-3">
         <label for="email" class="form-label">Email address</label>
+        <!-- name="email" is critical for req.body.email -->
         <input type="email" class="form-control" id="email" name="email" placeholder="Enter email" required>
       </div>
 
       <div class="mb-3">
         <label for="password" class="form-label">Password</label>
+        <!-- name="password" is critical for req.body.password -->
         <input type="password" class="form-control" id="password" name="password" placeholder="Enter password" required>
       </div>
 
       <button type="submit" class="btn btn-warning w-100" id="submitBtn">Login</button>
     </form>
 
-    <p class="text-center mt-3" id="toggleText">
-      Don't have an account? <span class="toggle-link" id="toggleLink">Sign up</span>
+    <p class="text-center mt-3" id="toggleWrap">
+      <span id="toggleLead">Don't have an account?</span>
+      <a href="#" class="toggle-link" id="toggleLink" data-target="signup">Sign up</a>
     </p>
   </div>
 
   <script>
-    const toggleLink = document.getElementById("toggleLink");
-    const formTitle = document.getElementById("formTitle");
-    const submitBtn = document.getElementById("submitBtn");
-    const toggleText = document.getElementById("toggleText");
-    const usernameField = document.getElementById("usernameField");
-    const authForm = document.getElementById("authForm");
+    (function () {
+      // the server passes mode via res.render("loginPage", { mode: "login" | "signup" })
+      const initialMode   = "<%= typeof mode !== 'undefined' ? mode : 'login' %>";
+      const authForm      = document.getElementById("authForm");
+      const formTitle     = document.getElementById("formTitle");
+      const submitBtn     = document.getElementById("submitBtn");
+      const usernameField = document.getElementById("usernameField");
+      const usernameInput = document.getElementById("username");
+      const toggleLead    = document.getElementById("toggleLead");
+      const toggleLink    = document.getElementById("toggleLink");
 
-    toggleLink.addEventListener("click", () => {
-      if (submitBtn.textContent === "Login") {
-        // Switch to Signup
-        formTitle.textContent = "Sign Up";
-        submitBtn.textContent = "Sign Up";
-        toggleText.innerHTML = 'Already have an account? <span class="toggle-link" id="toggleLink">Login</span>';
-        usernameField.style.display = "block";
-        authForm.action = "/signup"; // backend signup route
-      } else {
-        // Switch to Login
-        formTitle.textContent = "Login";
-        submitBtn.textContent = "Login";
-        toggleText.innerHTML = 'Don\'t have an account? <span class="toggle-link" id="toggleLink">Sign up</span>';
-        usernameField.style.display = "none";
-        authForm.action = "/login"; // backend login route
+      function setMode(mode) {
+        if (mode === "signup") {
+          formTitle.textContent = "Sign Up";
+          submitBtn.textContent = "Sign Up";
+          authForm.action = "/signup";
+          usernameField.style.display = "block";
+          usernameInput.setAttribute("required", "required");
+          toggleLead.textContent = "Already have an account?";
+          toggleLink.textContent = "Login";
+          toggleLink.dataset.target = "login";
+        } else {
+          formTitle.textContent = "Login";
+          submitBtn.textContent  = "Login";
+          authForm.action = "/login";
+          usernameField.style.display = "none";
+          usernameInput.removeAttribute("required");
+          toggleLead.textContent = "Don't have an account?";
+          toggleLink.textContent = "Sign up";
+          toggleLink.dataset.target = "signup";
+        }
       }
 
-      // re-bind toggle link after re-render
-      document.getElementById("toggleLink").addEventListener("click", arguments.callee);
-    });
+      // initialize from the server's chosen page
+      setMode(initialMode);
+
+      // toggle without replacing the element (keeps listener alive)
+      toggleLink.addEventListener("click", function (e) {
+        e.preventDefault();
+        setMode(toggleLink.dataset.target === "signup" ? "signup" : "login");
+      });
+    })();
   </script>
 </body>
 </html>

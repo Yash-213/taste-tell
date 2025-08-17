@@ -1,9 +1,9 @@
 const express = require('express');
-const mongoose = require('mongoose');
-const MongoStore =require("connect-mongo");
-const session = require("express-session");
-const cors = require('cors');
 const path = require('path');
+const mongoose = require('mongoose');
+const session = require("express-session");
+const MongoStore =require("connect-mongo");
+const cors = require('cors');
 const { title } = require('process');
 const Recipe = require("./models/Recipe");
 const Review = require('./models/Review');
@@ -11,16 +11,51 @@ const user = require("./models/User");
 
 const app = express();
 
-const authRoutes = require('./routes/auth');
+const MONGO_URL = process.env.MONGO_URL || "mongodb://127.0.0.1:27017/test";
+mongoose.connect(MONGO_URL)
+  .then(() => console.log("MongoDB connected"))
+  .catch(err => console.error("Mongo error:", err));
 
 // Middleware
-app.use('/', authRoutes);
 app.use(cors());
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+app.use(express.static(path.join(__dirname, "public"))); 
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.set("view engine", "ejs");
-app.use(express.static(path.join(__dirname, "public"))); 
-app.use(express.static(path.join(__dirname, "views")));
+
+app.set("trust proxy", 1);
+app.use(
+  session({
+    name: "taste.sid",
+    secret: process.env.SESSION_SECRET || "tasteTellSecret123",
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: MONGO_URL,
+      stringify: false,
+      ttl: 60 * 60 * 24, 
+    }),
+    cookie: {
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24, 
+      sameSite: "lax",
+    },
+  })
+);
+
+// --- Locals (Navbar + flash-like messages) ---
+app.use((req, res, next) => {
+  res.locals.username = req.session?.username || null;
+  res.locals.error = req.query.error || null;
+  res.locals.success = req.query.success || null;
+  next();
+});
+
+const authRoutes = require('./routes/auth');
+app.use('/', authRoutes);
+
 
 // MongoDB Connection
 main()
@@ -59,7 +94,6 @@ app.get('/recipes/:id', async (req, res) => {
     const avgRating = stats.length ? Number(stats[0].avgRating.toFixed(1)) : 0;
     const totalRatings = stats.length ? stats[0].totalRatings : 0;
 
-    // latest 20 comments
     const comments = await Review.find({
       recipeId: id,
       comment: { $exists: true, $ne: '' }
@@ -152,7 +186,7 @@ app.get("/login", async(req,res)=>{
   res.render("loginPage");
 })
 
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () =>{ 
   console.log(`Server running on port ${PORT}`);
 });

@@ -1,79 +1,89 @@
+// routes/auth.js
 const express = require("express");
-const bcrypt = require("bcrypt");
-const User = require("../models/User"); // create a User model in models/User.js
+const User = require("../models/User"); // already hashes password inside User.js
 const router = express.Router();
 
-// ======================= SIGNUP =======================
+// --- RENDER LOGIN/SIGNUP ---
+router.get("/login",  (req, res) => res.render("loginPage", { mode: "login" }));
+router.get("/signup", (req, res) => res.render("loginPage", { mode: "signup" }));
+
+// --- SIGNUP ---
 router.post("/signup", async (req, res) => {
   try {
-    const { username, email, password } = req.body || {};
+    let { username, email, password } = req.body || {};
+    username = (username || "").trim();
+    email    = (email || "").trim().toLowerCase();
+    password = (password || "").trim();
 
     if (!username || !email || !password) {
-      return res.status(400).send("All fields are required.");
+      return res.redirect("/signup?error=" + encodeURIComponent("All fields are required."));
     }
 
-    // check if email already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).send("Email already in use.");
+    const exists = await User.findOne({ email });
+    if (exists) {
+      return res.redirect("/signup?error=" + encodeURIComponent("Email already in use."));
     }
 
-    // hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // 🔹 Password will be hashed automatically via pre('save')
+    const newUser = await User.create({ username, email, password });
 
-    const newUser = new User({
-      username,
-      email,
-      password: hashedPassword,
-    });
+    // Ensure session is available
+    if (!req.session) {
+      return res.redirect("/login?error=" + encodeURIComponent("Session not initialized. Check session middleware."));
+    }
 
-    await newUser.save();
-
-    // set session
     req.session.userId = newUser._id;
     req.session.username = newUser.username;
 
-    res.redirect("/"); // after signup → homepage
+    return res.redirect("/?success=" + encodeURIComponent(`Welcome, ${newUser.username}!`));
   } catch (err) {
     console.error("Signup error:", err);
-    res.status(500).send("Internal Server Error");
+    return res.redirect("/signup?error=" + encodeURIComponent("Internal server error. Please try again."));
   }
 });
 
-// ======================= LOGIN =======================
+// --- LOGIN ---
 router.post("/login", async (req, res) => {
   try {
-    const { email, password } = req.body || {};
+    let { email, password } = req.body || {};
+    email    = (email || "").trim().toLowerCase();
+    password = (password || "").trim();
 
     if (!email || !password) {
-      return res.status(400).send("SignUp First");
+      return res.redirect("/login?error=" + encodeURIComponent("Email and password are required."));
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).send("Invalid email or password.");
+      return res.redirect("/login?error=" + encodeURIComponent("Invalid email or password."));
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).send("Invalid email or password.");
+    const ok = await user.comparePassword(password); // 🔹 use schema method
+    if (!ok) {
+      return res.redirect("/login?error=" + encodeURIComponent("Invalid email or password."));
     }
 
-    // set session
+    if (!req.session) {
+      return res.redirect("/login?error=" + encodeURIComponent("Session not initialized. Check session middleware."));
+    }
+
     req.session.userId = user._id;
     req.session.username = user.username;
 
-    res.redirect("/");
+    return res.redirect("/?success=" + encodeURIComponent(`Welcome back, ${user.username}!`));
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).send("Internal Server Error");
+    return res.redirect("/login?error=" + encodeURIComponent("Internal server error. Please try again."));
   }
 });
 
-// ======================= LOGOUT =======================
+// --- LOGOUT ---
 router.get("/logout", (req, res) => {
+  if (!req.session) {
+    return res.redirect("/login?success=" + encodeURIComponent("Logged out."));
+  }
   req.session.destroy(() => {
-    res.redirect("/login");
+    res.redirect("/login?success=" + encodeURIComponent("Logged out."));
   });
 });
 

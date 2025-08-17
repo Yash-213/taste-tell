@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>
+    <%= recipe.title %> - Taste & Tell
+  </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap first -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Your CSS second (served from /public) -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+
+  <div class="container my-5">
+    <div class="row g-4">
+      <!-- Image -->
+      <div class="col-md-5">
+        <img
+          src="<%= (typeof recipe.imageUrl === 'string' && recipe.imageUrl.trim()) ? recipe.imageUrl : 'https://via.placeholder.com/600x400?text=No+Image' %>"
+          class="img-fluid rounded shadow" alt="<%= recipe.title %>">
+      </div>
+
+      <!-- Details -->
+      <div class="col-md-7">
+        <h1 class="mb-3">
+          <%= recipe.title %>
+        </h1>
+
+        <p>
+          <strong>Category:</strong>
+          <span class="badge bg-primary">
+            <%= recipe.category %>
+          </span>
+        </p>
+
+        <% if (recipe.tags && recipe.tags.length) { %>
+          <p>
+            <strong>Tags:</strong>
+            <% recipe.tags.forEach(tag=> { %>
+              <span class="badge bg-secondary me-1">
+                <%= tag %>
+              </span>
+              <% }) %>
+          </p>
+          <% } %>
+
+            <!-- Average Rating -->
+            <div>
+              <strong>Rating:</strong>
+              <span id="avgStars" class="text-warning fs-4">
+                <% for (let i=1; i <=5; i++) { %>
+                  <i class="bi <%= i <= Math.round(avgRating) ? 'bi-star-fill' : 'bi-star' %>"></i>
+                  <% } %>
+              </span>
+              <span id="avgMeta"> (<%= avgRating %>/5) {<%= totalRatings %> ratings}</span>
+            </div>
+
+            <% if (userId) { %>
+              <div class="mt-2">
+                <strong>Your Rating:</strong>
+                <span id="rateStars" class="text-warning fs-3" style="cursor:pointer;">
+                  <% for (let i=1; i <=5; i++) { %>
+                    <i class="bi <%= (userRating && i <= userRating) ? 'bi-star-fill' : 'bi-star' %>"></i>
+                    <% } %>
+                </span>
+              </div>
+              <% } else { %>
+                <p class="text-muted mt-2">Login to rate this recipe</p>
+                <% } %>
+
+                  <hr>
+
+                  <h4>Ingredients</h4>
+                  <ul>
+                    <% recipe.ingredients.forEach(i=> { %>
+                      <li>
+                        <%= i %>
+                      </li>
+                      <% }) %>
+                  </ul>
+
+                  <h4>Procedure</h4>
+                  <ol>
+                    <% recipe.instructions.forEach(step=> { %>
+                      <li>
+                        <%= step %>
+                      </li>
+                      <% }) %>
+                  </ol>
+
+                  <a href="/" class="btn btn-secondary mt-3">Back to Recipes</a>
+      </div>
+    </div>
+
+    <hr class="my-5">
+
+    <!-- Comments -->
+    <div class="row">
+      <div class="col-lg-8">
+        <h4 class="mb-3">Comments</h4>
+        <ul id="commentList" class="list-group mb-3">
+          <% comments.forEach(c=> { %>
+            <li class="list-group-item d-flex justify-content-between">
+              <div>
+                <%= c.comment %>
+                  <small class="text-muted d-block mt-1">
+                    <%= new Date(c.date).toDateString() %>
+                  </small>
+              </div>
+              <% if (String(c.userId)===String(userId)) { %>
+                <button class="btn btn-sm btn-danger delete-comment" data-id="<%= c._id %>">Delete</button>
+                <% } %>
+            </li>
+            <% }) %>
+        </ul>
+        <div class="input-group">
+          <textarea id="commentText" class="form-control" placeholder="Write a comment..."></textarea>
+          <button id="submitComment" class="btn btn-primary">Post</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    const recipeId = "<%= recipe._id %>";
+    const userId = " ";
+
+    // Rate a recipe
+    document.querySelectorAll('#rateStars span').forEach((star, i) => {
+      star.addEventListener('click', async () => {
+        const rating = i + 1;
+        const res = await fetch(`/api/recipes/${recipeId}/rate`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rating, userId })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          // Lock stars with user rating
+          let html = "";
+          for (let j = 1; j <= 5; j++) {
+            html += j <= data.userRating ? "&#9733;" : "&#9734;";
+          }
+          document.getElementById('rateStars').innerHTML = html;
+          document.getElementById('avgStars').innerHTML = renderStars(data.avgRating);
+          document.getElementById('avgMeta').textContent = ` (${data.avgRating}/5) {${data.totalRatings} ratings}`;
+        }
+      });
+    });
+
+    // Delete comment
+    document.querySelectorAll('.delete-comment').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const commentId = btn.dataset.id;
+        const res = await fetch(`/api/recipes/${recipeId}/comment/${commentId}`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          btn.closest('li').remove();
+        }
+      });
+    });
+
+    // Helper to render stars
+    function renderStars(avg) {
+      let out = '';
+      for (let i = 1; i <= 5; i++) {
+        out += i <= Math.round(avg) ? '&#9733; ' : '&#9734; ';
+      }
+      return out.trim();
+    }
+
+  </script>
+
+</body>
+
+</html>

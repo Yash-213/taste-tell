@@ -33,17 +33,12 @@ body {
     transition: color var(--transition-time) ease;
 }
 
-.search-bar {
-    max-width: 300px;
-    border-radius: 100px;
-    transition: all var(--transition-time) ease;
-}
 
 /* Recipe cards */
 .recipe-card {
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     height: 100%;
-    width: 280px; 
+    width: 20px; 
     height: 400px; 
     display: flex;
     flex-direction: column;
@@ -69,24 +64,24 @@ body {
     transform: scale(1.05);
 }
 
-.card-body {
+/* .card-body {
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-}
+} */
 
 /* Rating stars */
-.rating {
+/* .rating {
     color: #ffc107;
     margin-bottom: 10px;
-}
+} */
 
 /* Recipe carousel */
-.recipe-carousel {
+/* .recipe-carousel {
     position: relative;
     padding: 0 40px;
     margin: 2rem 0;
-}
+} */
 
 .recipe-track {
     display: flex;
@@ -104,7 +99,7 @@ body {
 }
 
 /* Navigation arrows */
-.nav-arrow {
+/* .nav-arrow {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
@@ -120,32 +115,32 @@ body {
     z-index: 10;
     opacity: 0.9;
     transition: all 0.3s;
-}
+} */
 
-.nav-arrow.visible {
+/* .nav-arrow.visible {
     display: flex;
-}
+} */
 
-.nav-arrow:hover {
+/* .nav-arrow:hover {
     opacity: 1;
     transform: translateY(-50%) scale(1.1);
-}
+} */
 
-.nav-arrow.left {
+/* .nav-arrow.left {
     left: 0;
 }
 
 .nav-arrow.right {
     right: 0;
-}
+} */
 
-.nav-arrow i {
+/* .nav-arrow i {
     font-size: 1.2rem;
     color: var(--primary-color);
 }
 
 /* Show more arrow */
-.show-more-arrow {
+/* .show-more-arrow {
     flex: 0 0 100px;
     display: flex;
     align-items: center;
@@ -155,20 +150,19 @@ body {
     transition: all 0.3s;
     color: var(--primary-color);
     margin-left: 10px;
-}
-
-.show-more-arrow.visible {
+} */
+/* .show-more-arrow.visible {
     display: flex;
-}
+} */
 
-.show-more-arrow:not(.visible) {
+/* .show-more-arrow:not(.visible) {
     display: none;
-}
+} */
 
-.show-more-arrow i {
+/* .show-more-arrow i {
     font-size: 2rem;
     animation: bounceRight 2s infinite;
-}
+}  */
 
 @keyframes bounceRight {
     0%, 100% { transform: translateX(0); }

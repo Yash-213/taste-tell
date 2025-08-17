@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 main()
-    .then(() => console.log('Connected to MongoDB'))
+    .then(() => console.log('Connected to Recipe'))
     .catch(err => console.log(err));
 
 async function main() {
@@ -29,7 +29,7 @@ const recipeSchema = new mongoose.Schema({
         enum: ['Veg', 'Non-Veg', 'Dessert', 'Other']
     },
     imageUrl: {
-        String
+        type: String
 
     },
     tags: [
@@ -40,6 +40,4 @@ const recipeSchema = new mongoose.Schema({
     }
 });
 
-const recipes = mongoose.model("recipe", recipeSchema);
-
-module.exports = recipes;
+module.exports = mongoose.model('Recipe', recipeSchema);

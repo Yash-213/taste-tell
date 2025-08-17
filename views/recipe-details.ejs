@@ -130,7 +130,7 @@
 
   <script>
     const recipeId = "<%= recipe._id %>";
-    const userId = " ";
+    const userId = "<%= userId || '' %>";
 
     // Rate a recipe
     document.querySelectorAll('#rateStars span').forEach((star, i) => {

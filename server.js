@@ -99,7 +99,21 @@ app.get('/recipes/:id', async (req, res) => {
       comment: { $exists: true, $ne: '' }
     }).sort({ date: -1 }).limit(20).lean();
 
-    res.render('recipe-details', { recipe, avgRating, totalRatings, comments });
+    // 🔹 get user rating if logged in
+    let userRating = null;
+    if (req.session.userId) {
+      const myReview = await Review.findOne({ recipeId: id, userId: req.session.userId });
+      userRating = myReview ? myReview.rating : null;
+    }
+
+    res.render('recipe-details', { 
+      recipe, 
+      avgRating, 
+      totalRatings, 
+      comments, 
+      userId: req.session.userId || null,   // ✅ Pass userId here
+      userRating                             // ✅ Pass userRating here
+    });
   } catch (e) {
     console.error(e);
     res.status(500).send('Error loading recipe');

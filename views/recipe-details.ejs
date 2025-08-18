@@ -1,187 +1,346 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
-  <title>
-    <%= recipe.title %> - Taste & Tell
-  </title>
+  <title><%= recipe.title %> - Taste & Tell</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Bootstrap first -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Your CSS second (served from /public) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    #recipePage .hero-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      padding: 24px;
+    }
+    #recipePage .title-wrap h1 {
+      font-weight: 800;
+      letter-spacing: .2px;
+    }
+    #recipePage .meta-badges .badge {
+      font-size: .9rem;
+    }
+    #recipePage .starbar i {
+      font-size: 1.35rem;
+      cursor: pointer;
+      transition: transform .15s;
+    }
+    #recipePage .starbar i:hover { transform: translateY(-2px) scale(1.05); }
+    #recipePage .starbar.disabled i { cursor: default; pointer-events: none; }
+    #recipePage .back-btn {
+      border-radius: 999px;
+      padding: 8px 16px;
+    }
+    /* Comments UI */
+    #recipePage .comment-input {
+      border: 0 !important;
+      border-bottom: 2px solid #e0e0e0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+    #recipePage .comment-input:focus {
+      border-bottom-color: #ff7043 !important;
+      outline: none;
+      box-shadow: none !important;
+    }
+    #recipePage .comment-actions .btn {
+      border-radius: 999px;
+      padding: .6rem 1.2rem;
+    }
+    #recipePage .comment-actions {
+      gap: .75rem;
+    }
+    #recipePage .comment-card {
+      border: none !important;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.06);
+    }
+  </style>
 </head>
-
 <body>
+<div id="recipePage" class="container my-5">
 
-  <div class="container my-5">
-    <div class="row g-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="/" class="btn btn-outline-secondary back-btn">
+      <i class="bi bi-arrow-left me-1"></i> Back to Recipes
+    </a>
+  </div>
+
+  <div class="hero-card mb-4">
+    <div class="row g-4 align-items-start">
       <!-- Image -->
       <div class="col-md-5">
         <img
           src="<%= (typeof recipe.imageUrl === 'string' && recipe.imageUrl.trim()) ? recipe.imageUrl : 'https://via.placeholder.com/600x400?text=No+Image' %>"
-          class="img-fluid rounded shadow" alt="<%= recipe.title %>">
+          class="img-fluid rounded shadow-sm w-100" alt="<%= recipe.title %>">
       </div>
 
       <!-- Details -->
       <div class="col-md-7">
-        <h1 class="mb-3">
-          <%= recipe.title %>
-        </h1>
-
-        <p>
-          <strong>Category:</strong>
-          <span class="badge bg-primary">
-            <%= recipe.category %>
-          </span>
-        </p>
-
-        <% if (recipe.tags && recipe.tags.length) { %>
-          <p>
-            <strong>Tags:</strong>
-            <% recipe.tags.forEach(tag=> { %>
-              <span class="badge bg-secondary me-1">
-                <%= tag %>
-              </span>
-              <% }) %>
-          </p>
-          <% } %>
-
-            <!-- Average Rating -->
-            <div>
-              <strong>Rating:</strong>
-              <span id="avgStars" class="text-warning fs-4">
-                <% for (let i=1; i <=5; i++) { %>
-                  <i class="bi <%= i <= Math.round(avgRating) ? 'bi-star-fill' : 'bi-star' %>"></i>
-                  <% } %>
-              </span>
-              <span id="avgMeta"> (<%= avgRating %>/5) {<%= totalRatings %> ratings}</span>
-            </div>
-
-            <% if (userId) { %>
-              <div class="mt-2">
-                <strong>Your Rating:</strong>
-                <span id="rateStars" class="text-warning fs-3" style="cursor:pointer;">
-                  <% for (let i=1; i <=5; i++) { %>
-                    <i class="bi <%= (userRating && i <= userRating) ? 'bi-star-fill' : 'bi-star' %>"></i>
-                    <% } %>
-                </span>
-              </div>
-              <% } else { %>
-                <p class="text-muted mt-2">Login to rate this recipe</p>
-                <% } %>
-
-                  <hr>
-
-                  <h4>Ingredients</h4>
-                  <ul>
-                    <% recipe.ingredients.forEach(i=> { %>
-                      <li>
-                        <%= i %>
-                      </li>
-                      <% }) %>
-                  </ul>
-
-                  <h4>Procedure</h4>
-                  <ol>
-                    <% recipe.instructions.forEach(step=> { %>
-                      <li>
-                        <%= step %>
-                      </li>
-                      <% }) %>
-                  </ol>
-
-                  <a href="/" class="btn btn-secondary mt-3">Back to Recipes</a>
-      </div>
-    </div>
-
-    <hr class="my-5">
-
-    <!-- Comments -->
-    <div class="row">
-      <div class="col-lg-8">
-        <h4 class="mb-3">Comments</h4>
-        <ul id="commentList" class="list-group mb-3">
-          <% comments.forEach(c=> { %>
-            <li class="list-group-item d-flex justify-content-between">
-              <div>
-                <%= c.comment %>
-                  <small class="text-muted d-block mt-1">
-                    <%= new Date(c.date).toDateString() %>
-                  </small>
-              </div>
-              <% if (String(c.userId)===String(userId)) { %>
-                <button class="btn btn-sm btn-danger delete-comment" data-id="<%= c._id %>">Delete</button>
-                <% } %>
-            </li>
-            <% }) %>
-        </ul>
-        <div class="input-group">
-          <textarea id="commentText" class="form-control" placeholder="Write a comment..."></textarea>
-          <button id="submitComment" class="btn btn-primary">Post</button>
+        <div class="title-wrap">
+          <h1 class="mb-2"><%= recipe.title %></h1>
         </div>
+
+        <div class="meta-badges mb-3">
+          <span class="badge bg-primary me-2"><strong>Category:</strong> <%= recipe.category %></span>
+          <% if (recipe.tags && recipe.tags.length) { %>
+            <% recipe.tags.forEach(tag => { %>
+              <span class="badge bg-secondary me-1"><%= tag %></span>
+            <% }) %>
+          <% } %>
+        </div>
+
+        <!-- Average Rating -->
+        <div class="mb-2">
+          <strong>Rating:</strong>
+          <span id="avgStars" class="text-warning align-middle ms-1">
+            <% for (let i = 1; i <= 5; i++) { %>
+              <i class="bi <%= i <= Math.round(avgRating) ? 'bi-star-fill' : 'bi-star' %>"></i>
+            <% } %>
+          </span>
+          <span id="avgMeta" class="text-muted"> (<%= avgRating %>/5) {<%= totalRatings %> ratings}</span>
+        </div>
+
+        <!-- User Rating (interactive) -->
+        <% if (userId) { %>
+          <div class="mt-2">
+            <strong>Your Rating:</strong>
+            <span id="rateStars" class="starbar text-warning ms-2 <%= userRating ? 'disabled' : '' %>">
+              <% for (let i = 1; i <= 5; i++) { %>
+                <i class="bi <%= (userRating && i <= userRating) ? 'bi-star-fill' : 'bi-star' %> star" data-val="<%= i %>"></i>
+              <% } %>
+            </span>
+            <% if (userRating) { %>
+              <small class="text-muted ms-2">Thanks for rating!</small>
+            <% } %>
+          </div>
+        <% } else { %>
+          <p class="text-muted mt-2">Login to rate this recipe</p>
+        <% } %>
+
+        <hr class="my-4">
+
+        <h4>Ingredients</h4>
+        <ul class="mb-4">
+          <% recipe.ingredients.forEach(i => { %>
+            <li><%= i %></li>
+          <% }) %>
+        </ul>
+
+        <h4>Procedure</h4>
+        <ol>
+          <% recipe.instructions.forEach(step => { %>
+            <li><%= step %></li>
+          <% }) %>
+        </ol>
       </div>
     </div>
   </div>
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Comments -->
+  <div class="row">
+    <div class="col-lg-8">
+      <h4 class="mb-3">Comments</h4>
 
-  <script>
-    const recipeId = "<%= recipe._id %>";
-    const userId = "<%= userId || '' %>";
+      <ul id="commentList" class="list-group mb-3">
+        <% comments.forEach(c => { %>
+          <li class="list-group-item comment-card d-flex justify-content-between align-items-start mb-2">
+            <div class="pe-3">
+              <div><%= c.comment %></div>
+              <small class="text-muted d-block mt-1"><%= new Date(c.date).toDateString() %></small>
+            </div>
+            <% if (String(c.userId) === String(userId)) { %>
+              <button class="btn btn-sm btn-danger delete-comment" data-id="<%= c._id %>">
+                <i class="bi bi-trash"></i>
+              </button>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
 
-    // Rate a recipe
-    document.querySelectorAll('#rateStars span').forEach((star, i) => {
-      star.addEventListener('click', async () => {
-        const rating = i + 1;
+      <!-- Comment input -->
+      <div>
+        <textarea id="commentText" rows="2" class="form-control comment-input" placeholder="Write a comment..."></textarea>
+        <div class="d-flex justify-content-end align-items-center comment-actions mt-3">
+          <button id="submitComment" class="btn btn-primary">
+            <i class="bi bi-chat-left-text me-1"></i> Post Comment
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  const recipeId = "<%= recipe._id %>";
+  const userId   = "<%= userId || '' %>";
+
+  // Helpers
+  function renderStarIcons(n) {
+    const rounded = Math.round(Number(n) || 0);
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+      html += `<i class="bi ${i <= rounded ? 'bi-star-fill' : 'bi-star'}"></i>`;
+    }
+    return html;
+  }
+  function renderUserStarbar(n, disabled) {
+    const val = Number(n) || 0;
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+      html += `<i class="bi ${i <= val ? 'bi-star-fill' : 'bi-star'} star" data-val="${i}"></i>`;
+    }
+    return html;
+  }
+  function showAlert(message, type = 'danger') {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>`;
+    document.querySelector('#recipePage').prepend(wrap.firstElementChild);
+  }
+
+  // RATING: bind events only if user logged in and starbar not disabled
+  (function initRating() {
+    const starbar = document.getElementById('rateStars');
+    if (!starbar || !userId || starbar.classList.contains('disabled')) return;
+
+    let current = 0; // preview state
+
+    function paint(n) {
+      starbar.querySelectorAll('.star').forEach((el, idx) => {
+        el.classList.toggle('bi-star-fill', idx < n);
+        el.classList.toggle('bi-star', idx >= n);
+      });
+    }
+
+    starbar.addEventListener('mouseover', (e) => {
+      const t = e.target.closest('.star');
+      if (!t) return;
+      current = Number(t.dataset.val);
+      paint(current);
+    });
+
+    starbar.addEventListener('mouseleave', () => {
+      // restore original (based on filled count in DOM)
+      const filled = Array.from(starbar.querySelectorAll('.star'))
+        .reduce((acc, el) => acc + (el.classList.contains('bi-star-fill') ? 1 : 0), 0);
+      paint(filled);
+    });
+
+    starbar.addEventListener('click', async (e) => {
+      const t = e.target.closest('.star');
+      if (!t) return;
+      const rating = Number(t.dataset.val);
+
+      try {
         const res = await fetch(`/api/recipes/${recipeId}/rate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rating, userId })
+          body: JSON.stringify({ rating }) // server uses session; no need to send userId
         });
         const data = await res.json();
-        if (res.ok) {
-          // Lock stars with user rating
-          let html = "";
-          for (let j = 1; j <= 5; j++) {
-            html += j <= data.userRating ? "&#9733;" : "&#9734;";
-          }
-          document.getElementById('rateStars').innerHTML = html;
-          document.getElementById('avgStars').innerHTML = renderStars(data.avgRating);
-          document.getElementById('avgMeta').textContent = ` (${data.avgRating}/5) {${data.totalRatings} ratings}`;
+        if (!res.ok) {
+          if (data && data.message) showAlert(data.message, 'danger');
+          else showAlert('Rating failed. Please try again.');
+          return;
         }
-      });
+
+        // Lock the starbar after success
+        starbar.innerHTML = renderUserStarbar(data.userRating, true);
+        starbar.classList.add('disabled');
+        const thanks = document.createElement('small');
+        thanks.className = 'text-muted ms-2';
+        thanks.textContent = 'Thanks for rating!';
+        starbar.parentElement.appendChild(thanks);
+
+        // Update average
+        document.getElementById('avgStars').innerHTML = renderStarIcons(data.avgRating);
+        document.getElementById('avgMeta').textContent = ` (${data.avgRating}/5) {${data.totalRatings} ratings}`;
+      } catch (err) {
+        showAlert('Network error while rating.');
+      }
+    });
+  })();
+
+  // COMMENTS: submit
+  (function initComments() {
+    const btn = document.getElementById('submitComment');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+      const ta = document.getElementById('commentText');
+      const text = (ta.value || '').trim();
+      if (!userId) {
+        window.location.href = '/login?error=' + encodeURIComponent('Login required to comment');
+        return;
+      }
+      if (!text) {
+        ta.classList.add('is-invalid');
+        setTimeout(() => ta.classList.remove('is-invalid'), 1500);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/recipes/${recipeId}/comment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ comment: text })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          showAlert(data?.message || 'Failed to post comment.');
+          return;
+        }
+
+        // Prepend new comment
+        const li = document.createElement('li');
+        li.className = 'list-group-item comment-card d-flex justify-content-between align-items-start mb-2';
+        li.innerHTML = `
+          <div class="pe-3">
+            <div>${data.comment.text}</div>
+            <small class="text-muted d-block mt-1">${new Date(data.comment.date).toDateString()}</small>
+          </div>
+          <button class="btn btn-sm btn-danger delete-comment" data-id="${data.comment._id}">
+            <i class="bi bi-trash"></i>
+          </button>
+        `;
+        document.getElementById('commentList').prepend(li);
+        ta.value = '';
+      } catch (e) {
+        showAlert('Network error while posting comment.');
+      }
     });
 
-    // Delete comment
-    document.querySelectorAll('.delete-comment').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const commentId = btn.dataset.id;
+    // COMMENTS: delete (event delegation for new items)
+    const list = document.getElementById('commentList');
+    list.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.delete-comment');
+      if (!btn) return;
+      const commentId = btn.dataset.id;
+
+      try {
         const res = await fetch(`/api/recipes/${recipeId}/comment/${commentId}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId })
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
         });
         const data = await res.json();
         if (res.ok && data.success) {
           btn.closest('li').remove();
+        } else {
+          showAlert(data?.message || 'Unable to delete this comment.');
         }
-      });
-    });
-
-    // Helper to render stars
-    function renderStars(avg) {
-      let out = '';
-      for (let i = 1; i <= 5; i++) {
-        out += i <= Math.round(avg) ? '&#9733; ' : '&#9734; ';
+      } catch {
+        showAlert('Network error while deleting comment.');
       }
-      return out.trim();
-    }
-
-  </script>
-
+    });
+  })();
+</script>
 </body>
-
 </html>

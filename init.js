@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const recipes = require("./models/schema.js");
+const recipes = require("./models/Recipe.js");
 
 // MongoDB Connection
 main()
@@ -144,7 +144,7 @@ async function main() {
 //       "Add chicken and cook until done."
 //     ],
 //     "category": "Non-Veg",
-//     "imageUrl": "https://images.unsplash.com/photo-1563810842838-89c258d60d36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1NTgwMjJ8MHwxfHNlYXJjaHwxfHxDaGlja2VuJTIwQ3Vycnl8ZW58MHx8fHwxNzIzMjUxOTI3fDA&ixlib=rb-4.0.3&q=80&w=1080",
+//     "imageUrl": "https://images.unsplash.com/photo-1559847844-5315695dadae?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
 //     "tags": ["Indian", "Spicy", "Dinner"],
 //     "createdAt": "2025-08-09T15:30:00.000Z"
 //   },
@@ -187,7 +187,7 @@ async function main() {
 //       "Serve chilled."
 //     ],
 //     "category": "Other",
-//     "imageUrl": "https://images.unsplash.com/photo-1543353071-873f17203f52?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1NTgwMjJ8MHwxfHNlYXJjaHwxfHxGcnVpdCUyMFNhbGFkfGVufDB8fHx8MTcyMzI1MTkyOHww&ixlib=rb-4.0.3&q=80&w=1080",
+//     "imageUrl": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-1.2.1&auto=format&fit=crop&w=400&q=80",
 //     "tags": ["Healthy", "Quick", "Vegan"],
 //     "createdAt": "2025-08-07T09:15:00.000Z"
 //   }

@@ -19,19 +19,23 @@ const reviewSchema = new Schema({
     ref: 'Recipe', 
     required: true, 
     index: true 
-},
+  },
+  userId: { type: Schema.Types.ObjectId, 
+    ref: "User", 
+    required: true 
+  },
   rating: { 
     type: Number, 
     min: 1, 
     max: 5 
-},        // optional if only comment
+  },        
   comment: { 
     type: String, 
     default: '' 
-},          // optional if only rating
+  },          
   date: { type: Date, 
     default: Date.now 
-}
+  }
 }, 
 { timestamps: true });
 

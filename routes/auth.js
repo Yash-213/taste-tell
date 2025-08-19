@@ -1,6 +1,5 @@
-// routes/auth.js
 const express = require("express");
-const User = require("../models/User"); // already hashes password inside User.js
+const User = require("../models/User"); 
 const router = express.Router();
 
 // --- RENDER LOGIN/SIGNUP ---
@@ -77,7 +76,6 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// --- LOGOUT ---
 router.get("/logout", (req, res) => {
   if (!req.session) {
     return res.redirect("/login?success=" + encodeURIComponent("Logged out."));

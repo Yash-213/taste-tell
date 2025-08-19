@@ -45,7 +45,6 @@ app.use(
   })
 );
 
-// --- Locals (Navbar + flash-like messages) ---
 app.use((req, res, next) => {
   res.locals.username = req.session?.username || null;
   res.locals.error = req.query.error || null;
@@ -99,7 +98,6 @@ app.get('/recipes/:id', async (req, res) => {
       comment: { $exists: true, $ne: '' }
     }).sort({ date: -1 }).limit(20).lean();
 
-    // 🔹 get user rating if logged in
     let userRating = null;
     if (req.session.userId) {
       const myReview = await Review.findOne({ recipeId: id, userId: req.session.userId });
@@ -111,8 +109,8 @@ app.get('/recipes/:id', async (req, res) => {
       avgRating, 
       totalRatings, 
       comments, 
-      userId: req.session.userId || null,   // ✅ Pass userId here
-      userRating                             // ✅ Pass userRating here
+      userId: req.session.userId || null,   
+      userRating                            
     });
   } catch (e) {
     console.error(e);
@@ -144,8 +142,6 @@ app.post('/api/recipes/:id/rate', async (req, res) => {
     userRating: review.rating
   });
 });
-
-
 
 // AJAX: add comment
 app.post('/api/recipes/:id/comment', async (req, res) => {

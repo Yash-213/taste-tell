@@ -2,8 +2,9 @@ const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
 const session = require("express-session");
-const MongoStore =require("connect-mongo");
+const MongoStore = require("connect-mongo");
 const cors = require('cors');
+const axios = require("axios");
 const { title } = require('process');
 const Recipe = require("./models/Recipe");
 const Review = require('./models/Review');
@@ -20,7 +21,7 @@ mongoose.connect(MONGO_URL)
 app.use(cors());
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-app.use(express.static(path.join(__dirname, "public"))); 
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -35,11 +36,11 @@ app.use(
     store: MongoStore.create({
       mongoUrl: MONGO_URL,
       stringify: false,
-      ttl: 60 * 60 * 24, 
+      ttl: 60 * 60 * 24,
     }),
     cookie: {
       httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24, 
+      maxAge: 1000 * 60 * 60 * 24,
       sameSite: "lax",
     },
   })
@@ -58,65 +59,163 @@ app.use('/', authRoutes);
 
 // MongoDB Connection
 main()
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.log(err));
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.log(err));
 
 async function main() {
   await mongoose.connect('mongodb://127.0.0.1:27017/test');
 }
 
+// --- TheMealDB helpers ---
+const MEALDB_BASE = "https://www.themealdb.com/api/json/v1/1";
+
+function mapMealToCard(meal, categoryOverride = null) {
+  return {
+    _id: meal.idMeal,                      
+    title: meal.strMeal,
+    imageUrl: meal.strMealThumb,
+    category: categoryOverride || meal.strCategory || "Recipe",
+    tags: meal.strTags ? meal.strTags.split(",") : []
+  };
+}
+
+async function fetchMealsByCategory(category, limit = 12) {
+  // TheMealDB: filter by category returns id, name, thumb
+  const url = `${MEALDB_BASE}/filter.php?c=${encodeURIComponent(category)}`;
+  const { data } = await axios.get(url);
+  const meals = data.meals || [];
+  return meals.slice(0, limit).map(m => mapMealToCard(m, category));
+}
+
+async function fetchMealsBySearch(term, limit = 24) {
+  const url = `${MEALDB_BASE}/search.php?s=${encodeURIComponent(term)}`;
+  const { data } = await axios.get(url);
+  const meals = data.meals || [];
+  // keep more fields if you want, but for cards we only need a few
+  return meals.slice(0, limit).map(m => mapMealToCard(m, m.strCategory));
+}
+
+
 // Main route
 app.get('/', async (req, res) => {
   try {
     const dish = await Recipe.find().sort({ createdAt: -1 }).lean();
-    res.render('index', { dish });
+        const [specials, vegMeals, nonVegMeals, dessertMeals] = await Promise.all([
+      fetchMealsByCategory('Chicken', 12),
+      fetchMealsByCategory('Vegetarian', 12),
+      fetchMealsByCategory('Dessert', 12),
+    ]);
+    res.render('index', {
+      dish,
+      username: req.session?.username || null,
+      searchMode: false,
+      meals: [],
+      query: "",
+      specials,
+      vegMeals,
+      nonVegMeals,
+      dessertMeals
+    });
   } catch (e) {
     console.error(e);
     res.status(500).send('Error fetching recipes');
   }
 });
 
-// Detail page with stats + recent comments
-app.get('/recipes/:id', async (req, res) => {
+
+// Search route
+app.post('/search', async (req, res) => {
+  const query = (req.body.searchTerm || "").trim();
+  if (!query) {
+    // no term → just go home
+    return res.redirect('/');
+  }
+
   try {
-    const { id } = req.params;
+    const meals = await fetchMealsBySearch(query);
 
-    const recipe = await Recipe.findById(id).lean();
-    if (!recipe) return res.status(404).send('Recipe not found');
-
-    // ratings stats via aggregation
-    const stats = await Review.aggregate([
-      { $match: { recipeId: new mongoose.Types.ObjectId(id), rating: { $gte: 1 } } },
-      { $group: { _id: '$recipeId', avgRating: { $avg: '$rating' }, totalRatings: { $sum: 1 } } }
-    ]);
-
-    const avgRating = stats.length ? Number(stats[0].avgRating.toFixed(1)) : 0;
-    const totalRatings = stats.length ? stats[0].totalRatings : 0;
-
-    const comments = await Review.find({
-      recipeId: id,
-      comment: { $exists: true, $ne: '' }
-    }).sort({ date: -1 }).limit(20).lean();
-
-    let userRating = null;
-    if (req.session.userId) {
-      const myReview = await Review.findOne({ recipeId: id, userId: req.session.userId });
-      userRating = myReview ? myReview.rating : null;
-    }
-
-    res.render('recipe-details', { 
-      recipe, 
-      avgRating, 
-      totalRatings, 
-      comments, 
-      userId: req.session.userId || null,   
-      userRating                            
+    // Render index in "search mode": only show search results section
+    res.render('index', {
+      username: req.session?.username || null,
+      searchMode: true,
+      meals,
+      query,
+      // empty sections so they don't render
+      specials: [],
+      vegMeals: [],
+      nonVegMeals: [],
+      dessertMeals: []
     });
-  } catch (e) {
-    console.error(e);
-    res.status(500).send('Error loading recipe');
+  } catch (error) {
+    console.error('Error fetching recipes:', error);
+    res.render('index', {
+      username: req.session?.username || null,
+      searchMode: true,
+      meals: [],
+      query,
+      specials: [],
+      vegMeals: [],
+      nonVegMeals: [],
+      dessertMeals: [],
+      error: 'Could not fetch recipes.'
+    });
   }
 });
+
+
+// Detail page with stats + recent comments
+app.get("/recipe/:id", async (req, res) => {
+  const mealId = req.params.id;
+  const url = `${MEALDB_BASE}/lookup.php?i=${mealId}`;
+
+  try {
+    const { data } = await axios.get(url);
+    const meal = data.meals ? data.meals[0] : null;
+
+    if (!meal) {
+      return res.status(404).render("recipe-details", { 
+        recipe: null, 
+        avgRating: 0, 
+        totalRatings: 0,
+        userRating: null,
+        comments: [],
+        userId: req.session?.userId || null
+      });
+    }
+
+    const recipe = {
+      _id: meal.idMeal,
+      title: meal.strMeal,
+      category: meal.strCategory || "Recipe",
+      imageUrl: meal.strMealThumb,
+      tags: meal.strTags ? meal.strTags.split(",") : [],
+      ingredients: [],
+      instructions: meal.strInstructions ? meal.strInstructions.split("\n").filter(Boolean) : []
+    };
+
+    for (let i = 1; i <= 20; i++) {
+      const ing = meal[`strIngredient${i}`];
+      const measure = meal[`strMeasure${i}`];
+      if (ing && ing.trim()) {
+        recipe.ingredients.push(`${(measure || '').trim()} ${ing}`.trim());
+      }
+    }
+
+    // You can wire ratings/comments for API recipes by using Review with recipeId = mealId (string)
+    res.render("recipe-details", {
+      recipe,
+      avgRating: 0,
+      totalRatings: 0,
+      userRating: null,
+      comments: [],
+      userId: req.session?.userId || null
+    });
+  } catch (err) {
+    console.error("Error fetching meal details:", err);
+    res.status(500).send("Error loading recipe details.");
+  }
+});
+
 
 // AJAX: add rating (1–5)
 app.post('/api/recipes/:id/rate', async (req, res) => {
@@ -192,11 +291,11 @@ app.delete('/api/recipes/:id/comment/:commentId', async (req, res) => {
 
 
 // loginPage route
-app.get("/login", async(req,res)=>{
+app.get("/login", async (req, res) => {
   res.render("loginPage");
 })
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () =>{ 
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

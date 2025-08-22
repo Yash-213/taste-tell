@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Results for "<%= query %>"</title>
+</head>
+<body>
+  <h1>Recipes for "<%= query %>"</h1>
+
+  <% if (meals.length > 0) { %>
+    <ul>
+      <% meals.forEach(meal => { %>
+        <li>
+          <h3><%= meal.strMeal %></h3>
+          <img src="<%= meal.strMealThumb %>" width="200" alt="<%= meal.strMeal %>">
+          <p><a href="<%= meal.strSource || '#' %>" target="_blank">View Recipe</a></p>
+        </li>
+      <% }) %>
+    </ul>
+  <% } else { %>
+    <p>No recipes found.</p>
+  <% } %>
+
+  <a href="/">Search Again</a>
+</body>
+</html>

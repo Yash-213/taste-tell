@@ -64,9 +64,6 @@
         </div>
     </nav>
 
-    <!-- =========================
-     Search Results (only when searching)
-========================== -->
 <% if (searchMode) { %>
   <div class="container my-5">
     <h3 class="mb-4">Search Results for "<%= query %>"</h3>
@@ -106,7 +103,6 @@
                 <% } %>
 
                 <div class="mt-auto">
-                  <!-- API detail route -->
                   <a href="/recipe/<%= recipe._id %>" class="btn btn-outline-primary w-100">View Recipe</a>
                 </div>
               </div>
@@ -123,9 +119,6 @@
   </div>
 <% } %>
 
-<!-- =========================
-     Normal Home (no search): Sections
-========================== -->
 <% if (!searchMode) { %>
   <div class="container my-5">
     <h2 class="mb-4 text-center text-primary fw-bold">Chef's Specials</h2>
@@ -205,7 +198,7 @@
     </div>
   </div>
 
-  <!-- Dessert -->
+  <!-- Dessert
   <div class="container my-5">
     <h2 class="mb-4 text-center text-warning fw-bold">Desserts</h2>
     <div class="recipe-carousel">
@@ -226,12 +219,11 @@
       <div class="show-more-arrow visible"><i class="bi bi-arrow-right-circle"></i></div>
     </div>
   </div>
-<% } %>
+<% } %> -->
 
     <!-- Chef's Specials Carousel -->
     <div class="container my-5">
-        <h2 class="mb-4 text-center text-primary fw-bold">Chef's Specials</h2>
-
+        <h2 class="mb-4 text-center text-primary fw-bold">Uploaded by peoples</h2>
         <div class="recipe-carousel">
             <div class="recipe-track">
                 <% if (dish && dish.length > 0) { %>

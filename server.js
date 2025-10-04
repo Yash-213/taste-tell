@@ -57,15 +57,6 @@ const authRoutes = require('./routes/auth');
 app.use('/', authRoutes);
 
 
-// MongoDB Connection
-main()
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.log(err));
-
-async function main() {
-  await mongoose.connect('mongodb://127.0.0.1:27017/test');
-}
-
 // --- TheMealDB helpers ---
 const MEALDB_BASE = "https://www.themealdb.com/api/json/v1/1";
 
@@ -201,7 +192,6 @@ app.get("/recipe/:id", async (req, res) => {
       }
     }
 
-    // You can wire ratings/comments for API recipes by using Review with recipeId = mealId (string)
     res.render("recipe-details", {
       recipe,
       avgRating: 0,

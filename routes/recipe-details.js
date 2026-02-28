@@ -10,7 +10,6 @@ app.get("/recipe/:id", async (req, res) => {
       return res.redirect("/?error=" + encodeURIComponent("Recipe not found"));
     }
 
-    // Convert API data to match your schema
     const recipe = {
       _id: recipeId,
       title: meal.strMeal,
@@ -23,7 +22,6 @@ app.get("/recipe/:id", async (req, res) => {
       instructions: meal.strInstructions.split(/\r?\n/).filter(s => s.trim())
     };
 
-    // TODO: Fetch ratings & comments from Review.js
     const avgRating = 0;
     const totalRatings = 0;
     const userRating = null;

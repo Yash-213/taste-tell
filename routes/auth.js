@@ -2,11 +2,10 @@ const express = require("express");
 const User = require("../models/User"); 
 const router = express.Router();
 
-// --- RENDER LOGIN/SIGNUP ---
 router.get("/login",  (req, res) => res.render("loginPage", { mode: "login" }));
 router.get("/signup", (req, res) => res.render("loginPage", { mode: "signup" }));
 
-// --- SIGNUP ---
+// SIGNUP
 router.post("/signup", async (req, res) => {
   try {
     let { username, email, password } = req.body || {};
@@ -23,10 +22,8 @@ router.post("/signup", async (req, res) => {
       return res.redirect("/signup?error=" + encodeURIComponent("Email already in use."));
     }
 
-    // 🔹 Password will be hashed automatically via pre('save')
     const newUser = await User.create({ username, email, password });
 
-    // Ensure session is available
     if (!req.session) {
       return res.redirect("/login?error=" + encodeURIComponent("Session not initialized. Check session middleware."));
     }
@@ -41,7 +38,7 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-// --- LOGIN ---
+//LOGIN
 router.post("/login", async (req, res) => {
   try {
     let { email, password } = req.body || {};
@@ -57,7 +54,7 @@ router.post("/login", async (req, res) => {
       return res.redirect("/login?error=" + encodeURIComponent("Invalid email or password."));
     }
 
-    const ok = await user.comparePassword(password); // 🔹 use schema method
+    const ok = await user.comparePassword(password); 
     if (!ok) {
       return res.redirect("/login?error=" + encodeURIComponent("Invalid email or password."));
     }

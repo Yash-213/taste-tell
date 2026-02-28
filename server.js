@@ -57,8 +57,6 @@ app.use((req, res, next) => {
 const authRoutes = require('./routes/auth');
 app.use('/', authRoutes);
 
-
-// --- TheMealDB helpers ---
 const MEALDB_BASE = "https://www.themealdb.com/api/json/v1/1";
 
 function mapMealToCard(meal, categoryOverride = null) {
@@ -72,7 +70,6 @@ function mapMealToCard(meal, categoryOverride = null) {
 }
 
 async function fetchMealsByCategory(category, limit = 12) {
-  // TheMealDB: filter by category returns id, name, thumb
   const url = `${MEALDB_BASE}/filter.php?c=${encodeURIComponent(category)}`;
   const { data } = await axios.get(url);
   const meals = data.meals || [];
@@ -83,7 +80,6 @@ async function fetchMealsBySearch(term, limit = 24) {
   const url = `${MEALDB_BASE}/search.php?s=${encodeURIComponent(term)}`;
   const { data } = await axios.get(url);
   const meals = data.meals || [];
-  // keep more fields if you want, but for cards we only need a few
   return meals.slice(0, limit).map(m => mapMealToCard(m, m.strCategory));
 }
 
@@ -119,20 +115,17 @@ app.get('/', async (req, res) => {
 app.post('/search', async (req, res) => {
   const query = (req.body.searchTerm || "").trim();
   if (!query) {
-    // no term → just go home
     return res.redirect('/');
   }
 
   try {
     const meals = await fetchMealsBySearch(query);
 
-    // Render index in "search mode": only show search results section
     res.render('index', {
       username: req.session?.username || null,
       searchMode: true,
       meals,
       query,
-      // empty sections so they don't render
       specials: [],
       vegMeals: [],
       nonVegMeals: [],
@@ -263,21 +256,6 @@ app.delete('/api/recipes/:id/comment/:commentId', async (req, res) => {
 
   if (!deleted) return res.status(403).json({ message: "Not allowed" });
   res.json({ success: true });
-});
-
-
-app.delete('/api/recipes/:id/comment/:commentId', async (req, res) => {
-  try {
-    const { id, commentId } = req.params;
-    const { userId } = req.body;
-
-    const review = await Review.findOneAndDelete({ _id: commentId, recipeId: id, userId });
-    if (!review) return res.status(403).json({ message: "Not allowed" });
-
-    res.json({ success: true, deletedId: commentId });
-  } catch (e) {
-    res.status(500).json({ message: 'Error deleting comment' });
-  }
 });
 
 
